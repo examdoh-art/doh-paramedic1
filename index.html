@@ -74,7 +74,7 @@ main{max-width:820px;margin:0 auto;padding:10px 10px 80px;}
 
 <header>
   <h1>DOH-Paramedic: CBT</h1>
-  <div style="font-size:0.6rem;color:rgba(255,255,255,0.4);margin-top:2px;">v4.2-final</div>
+  <div style="font-size:0.6rem;color:rgba(255,255,255,0.4);margin-top:2px;">v4.3-final</div>
   <div id="userBadge" style="display:none; background:rgba(255,255,255,0.15); border-radius:20px; padding:5px 14px; font-size:0.76rem; color:#ecf0f1; margin-top:10px;"></div>
 </header>
 
@@ -119,28 +119,28 @@ main{max-width:820px;margin:0 auto;padding:10px 10px 80px;}
 
 // Detect in-app browsers (WhatsApp, Instagram, Facebook, etc.)
 (function() {
-  var ua = navigator.userAgent || '';
+  var ua = navigator.userAgent || "";
   var isInApp = /FBAN|FBAV|Instagram|WhatsApp|Telegram|Line|Twitter/i.test(ua);
   var isIOS = /iPhone|iPad|iPod/i.test(ua);
   
   if (isInApp) {
-    // Show "Open in Safari/Chrome" banner
-    window.addEventListener('DOMContentLoaded', function() {
-      var banner = document.createElement('div');
-      banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#e74c3c;color:#fff;padding:15px 20px;text-align:center;font-family:sans-serif;font-size:0.9rem;box-shadow:0 2px 10px rgba(0,0,0,0.3);';
+    window.addEventListener("DOMContentLoaded", function() {
+      var banner = document.createElement("div");
+      banner.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:99999;background:#e74c3c;color:#fff;padding:15px 20px;text-align:center;font-family:sans-serif;font-size:0.9rem;box-shadow:0 2px 10px rgba(0,0,0,0.3);";
       
-      if (isIOS) {
-        banner.innerHTML = '⚠️ For best experience, tap <b>⋯</b> menu → <b>"Open in Safari"</b>' +
-          '<br><small style="opacity:0.8;">WhatsApp browser may block some features</small>' +
-          '<div onclick="this.parentNode.style.display='none'" style="margin-top:8px;padding:6px 16px;background:rgba(255,255,255,0.2);border-radius:6px;display:inline-block;cursor:pointer;">Dismiss</div>';
-      } else {
-        banner.innerHTML = '⚠️ Tap <b>⋮</b> menu → <b>"Open in Chrome/Browser"</b> for full features' +
-          '<div onclick="this.parentNode.style.display='none'" style="margin-top:8px;padding:6px 16px;background:rgba(255,255,255,0.2);border-radius:6px;display:inline-block;cursor:pointer;">Dismiss</div>';
-      }
+      var msg = isIOS
+        ? "\u26a0\ufe0f For best experience, tap <b>\u22ef</b> menu \u2192 <b>Open in Safari</b>"
+        : "\u26a0\ufe0f Tap <b>\u22ee</b> menu \u2192 <b>Open in Chrome/Browser</b> for full features";
+      
+      banner.innerHTML = msg + "<br><div style=\"margin-top:8px;padding:6px 16px;background:rgba(255,255,255,0.2);border-radius:6px;display:inline-block;cursor:pointer;\" id=\"dismissBanner\">Dismiss</div>";
       
       document.body.insertBefore(banner, document.body.firstChild);
-      // Push content down
-      document.body.style.paddingTop = (banner.offsetHeight + 5) + 'px';
+      document.body.style.paddingTop = (banner.offsetHeight + 5) + "px";
+      
+      document.getElementById("dismissBanner").onclick = function() {
+        banner.style.display = "none";
+        document.body.style.paddingTop = "0px";
+      };
     });
   }
 })();
@@ -608,5 +608,5 @@ function calcOp(op) { calcVal += op; updateCalc(); }
 function updateCalc() { document.getElementById('calcDisplay').textContent = calcVal; }
 function calcEq() { try { calcVal = eval(calcVal).toString(); updateCalc(); } catch(e) { calcVal = 'Error'; updateCalc(); } }
 </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a045258138cc6122',t:'MTc4MDIyMTc4Mw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a045333dbe508a0d',t:'MTc4MDIyMjM0NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
