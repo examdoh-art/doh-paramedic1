@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<title>DOH-Paramedic: CBT</title>
+<style>
+:root{
+  --primary:#2c3e50;--accent:#e74c3c;--green:#27ae60;
+  --yellow:#f39c12;--light:#ecf0f1;--card:#fff;
+  --border:#bdc3c7;--text:#2c3e50;--sub:#7f8c8d;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',Arial,sans-serif;background:var(--light);color:var(--text);}
+header{background:linear-gradient(135deg,#2c3e50,#34495e);color:#fff;padding:22px 20px 16px;text-align:center;border-bottom:4px solid var(--accent);}
+header h1{font-size:1.4rem; margin-bottom:5px;}
+main{max-width:820px;margin:0 auto;padding:10px 10px 80px;}
+.score-card{background:#fff;border-radius:12px;padding:15px;margin-bottom:18px;display:flex;justify-content:space-around;border:1px solid var(--border);box-shadow:0 2px 5px rgba(0,0,0,0.05);}
+.sc-item{text-align:center;}
+.sc-item .val{font-size:1.4rem;font-weight:bold;display:block;}
+.sc-item .lbl{font-size:0.65rem;color:var(--sub);text-transform:uppercase;}
+.q-card{background:#fff;border-radius:12px;border:1px solid var(--border);margin-bottom:18px;overflow:hidden;box-shadow:0 3px 10px rgba(0,0,0,0.05);}
+.q-head{background:#fdfefe;padding:15px;border-bottom:1px solid #eee;display:flex;gap:12px;}
+.q-num{background:var(--primary);color:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:bold;}
+.q-num.ok{background:var(--green);}
+.q-num.bad{background:var(--accent);}
+.q-scen{font-size:0.95rem; line-height:1.6;}
+.q-ask{font-size:0.95rem; font-weight:bold; padding:15px 15px 5px; color:var(--primary);}
+.opts{padding:10px 15px 15px;display:flex;flex-direction:column;gap:8px;}
+.opt{border:1.5px solid var(--border);border-radius:10px;padding:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;display:flex;gap:10px;align-items:center;transition:0.2s;}
+.opt.right{background:#e9f7ef;border-color:var(--green);}
+.opt.wrong{background:#fdedec;border-color:var(--accent);}
+.opt.done{pointer-events:none;}
+.expbox{display:none;padding:15px;background:#f8f9f9;border-top:1px solid #eee;}
+.expbox.show{display:block;}
+#regOverlay{position:fixed;top:0;left:0;right:0;bottom:0;background:#2c3e50;z-index:9999;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;padding:20px;}
+.reg-box{background:#fff;border-radius:20px;padding:30px;max-width:420px;width:100%;text-align:center;}
+.reg-field input{width:100%;padding:15px;border:2px solid #ddd;border-radius:10px;font-size:1.2rem;text-align:center;margin-bottom:15px; outline:none;}
+.btn-reg{width:100%;padding:16px;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:800;cursor:pointer;}
+.results{display:none;text-align:center;padding:40px;background:#fff;border-radius:20px;margin-top:20px; border:2px solid var(--primary);}
+.results.show{display:block;}
+.grade{font-size:3.5rem;font-weight:bold;margin:15px 0;}
+.gA{color:var(--green);} .gF{color:var(--accent);}
+.fab{position:fixed;bottom:25px;width:56px;height:56px;color:#fff;border:none;border-radius:50%;font-size:1.4rem;cursor:pointer;z-index:8000;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(0,0,0,0.3);}
+#sbFab{right:20px;background:#f39c12;}
+.modal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:9000;align-items:center;justify-content:center;padding:16px;}
+.modal.open{display:flex;}
+.modal-box{background:#fff;border-radius:20px;width:100%;max-width:450px;max-height:85vh;overflow-y:auto;padding:20px;position:relative;}
+.sb-row{display:flex;justify-content:space-between;padding:12px;border-bottom:1px solid #eee; font-size: 0.9rem;}
+</style>
+</head>
+<body>
+
+<div id="regOverlay">
+  <div class="reg-box">
+    <div style="font-size:3.5rem">🚑</div>
+    <h2 style="margin-bottom:10px">DOH-Paramedic: CBT</h2>
+    <p style="color: #e74c3c; font-weight: bold; margin-bottom: 20px;">Enter your old Military ID</p>
+    <div class="reg-field">
+      <input type="tel" id="regMilitaryID" placeholder="ID Number" autocomplete="off" />
+    </div>
+    <button id="loginBtn" class="btn-reg" onclick="submitReg()">🚀 Enter Exam</button>
+    <p id="syncMsg" style="margin-top:15px; font-size:0.85rem; color:#7f8c8d; display:none;">Checking cloud storage...</p>
+    <div style="margin-top:20px; font-size:0.75rem; color:#bdc3c7;">Created By Arshad Majeed Whatsapp 0561274959</div>
+  </div>
+</div>
+
+<header>
+  <h1>DOH-Paramedic: CBT</h1>
+  <div style="font-size:0.6rem;color:rgba(255,255,255,0.4);margin-top:2px;">v4.7-final</div>
+  <div id="userBadge" style="display:none; background:rgba(255,255,255,0.15); border-radius:20px; padding:5px 14px; font-size:0.76rem; color:#ecf0f1; margin-top:10px;"></div>
+</header>
+
+<main>
+  <div class="score-card">
+    <div class="sc-item"><span class="val" id="eAns">0</span><span class="lbl">Answered</span></div>
+    <div class="sc-item c"><span class="val" id="eCorr">0</span><span class="lbl">Correct</span></div>
+    <div class="sc-item p"><span class="val" id="ePct">0%</span><span class="lbl">Total Score</span></div>
+  </div>
+  <div id="examQs"></div>
+  <div id="resultsPanel" class="results">
+    <h2>Result Summary</h2>
+    <div class="grade" id="rGrade">—</div>
+    <p style="font-size:2.5rem; margin:10px 0; font-weight:bold" id="finalPct">0%</p>
+    <button class="btn-reg" style="max-width:200px" onclick="location.reload()">Close</button>
+  </div>
+</main>
+
+<button id="sbFab" class="fab" onclick="toggleModal('sbModal')">🏆</button>
+
+
+<div id="sbModal" class="modal" onclick="if(event.target==this)this.classList.remove('open')">
+  <div class="modal-box">
+    <h3>🏆 Leaderboard</h3>
+    <div id="sbList" style="margin-top:15px">Loading...</div>
+  </div>
+</div>
+
+
+
+<script>
+
+// Detect in-app browsers (WhatsApp, Instagram, Facebook, etc.)
+(function() {
+  var ua = navigator.userAgent || "";
+  var isInApp = /FBAN|FBAV|Instagram|WhatsApp|Telegram|Line|Twitter/i.test(ua);
+  var isIOS = /iPhone|iPad|iPod/i.test(ua);
+  
+  if (isInApp) {
+    window.addEventListener("DOMContentLoaded", function() {
+      var banner = document.createElement("div");
+      banner.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:99999;background:#e74c3c;color:#fff;padding:15px 20px;text-align:center;font-family:sans-serif;font-size:0.9rem;box-shadow:0 2px 10px rgba(0,0,0,0.3);";
+      
+      var msg = isIOS
+        ? "\u26a0\ufe0f For best experience, tap <b>\u22ef</b> menu \u2192 <b>Open in Safari</b>"
+        : "\u26a0\ufe0f Tap <b>\u22ee</b> menu \u2192 <b>Open in Chrome/Browser</b> for full features";
+      
+      banner.innerHTML = msg + "<br><div style=\"margin-top:8px;padding:6px 16px;background:rgba(255,255,255,0.2);border-radius:6px;display:inline-block;cursor:pointer;\" id=\"dismissBanner\">Dismiss</div>";
+      
+      document.body.insertBefore(banner, document.body.firstChild);
+      document.body.style.paddingTop = (banner.offsetHeight + 5) + "px";
+      
+      document.getElementById("dismissBanner").onclick = function() {
+        banner.style.display = "none";
+        document.body.style.paddingTop = "0px";
+      };
+    });
+  }
+})();
+
+// Polyfills for older browsers (iOS Safari compatibility)
+if (!Object.values) { Object.values = function(obj) { return Object.keys(obj).map(function(k) { return obj[k]; }); }; }
+if (!Array.prototype.includes) { Array.prototype.includes = function(v) { return this.indexOf(v) !== -1; }; }
+
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxqmDb2DLreNdLHCOC5Yk7JBdjurUjB8qOQfzrYMPks664uLrKMgZKVBiy2nPzWo1s-/exec';
+var authorizedIDs = ["200432", "200401", "200394", "200393", "200662", "200671", "200522", "201059", "200510", "200667", "200605", "200659", "200666", "200983", "200958", "200649", "200655", "200686", "200610", "201070", "200600", "200520", "200967", "200861", "200897", "200882", "200839", "200848", "200795", "200982", "200737", "200753", "200738", "201086", "201076", "200736", "201081", "200631", "200624", "201050", "200521", "200508", "200606", "200616", "200618", "200785", "200991", "200791", "200996", "200821", "200955", "200813", "200994", "200961", "200969", "201415", "200790", "201101", "200823", "200780", "200812", "200455", "200464", "200468", "200479", "200495", "200398", "201034", "201037", "200630", "200504"];
+
+var QS = [
+  {"id": 1, "scen": "", "ask": "A 28-year-old male is brought to the emergency department by EMS in active generalized tonic-clonic status epilepticus. He has been seizing for approximately 25 minutes. Paramedics have administered three sequential doses of IV midazolam—without termination of seizure activity. His airway is being managed with BVM, SpO₂ is 94%, BP 162/94, HR 132, BGL 6.2 mmol/L. Which of the following is the MOST appropriate next-line medication to administer?", "opts": ["Phenytoin", "Valproic acid", "Ketamine", "Levetiracetam"], "ans": "D", "ansText": "D. Levetiracetam", "exp": "The correct answer is Levetiracetam.", "key": "Medical Emergency Knowledge"},
+  {"id": 2, "scen": "", "ask": "A 45-year-old male is pulled from an icy lake in VF cardiac arrest. Core temperature via esophageal probe is 27°C. After delivering one shock at maximum energy, the patient remains in VF. What is the MOST appropriate next action?", "opts": ["Continue defibrillating every 2 minutes per standard ACLS", "Administer epinephrine 1 mg IV and shock again", "Continue CPR and aggressive rewarming; defer further shocks until core temp ≥30°C", "Terminate resuscitation efforts"], "ans": "C", "ansText": "C. Continue CPR and aggressive rewarming; defer further shocks until core temp ≥30°C", "exp": "The correct answer is Continue CPR and aggressive rewarming; defer further shocks until core temp ≥30°C.", "key": "Medical Emergency Knowledge"},
+  {"id": 3, "scen": "", "ask": "A 78-year-old female presents with shortness of breath and an irregularly irregular pulse. Her 12-lead ECG shows a fibrillating baseline with no discernible P waves and irregular QRS complexes. On auscultation, which abnormal heart sound would you MOST LIKELY hear?", "opts": ["S4 (atrial gallop)", "S3 (ventricular gallop)", "Aortic ejection click", "Mid-systolic click"], "ans": "B", "ansText": "B. S3 (ventricular gallop)", "exp": "The correct answer is S3 (ventricular gallop).", "key": "Medical Emergency Knowledge"},
+  {"id": 4, "scen": "", "ask": "A 32-year-old hiker is bitten by a rattlesnake on the lateral aspect of the right calf. There are two visible puncture wounds (fang marks) with localized swelling and ecchymosis. The patient is anxious but hemodynamically stable. What is the MOST APPROPRIATE prehospital management?", "opts": ["Apply a tourniquet proximal to the bite and elevate the leg", "Make an incision over the bite and apply suction", "Immobilize the affected limb with a splint", "Apply ice packs and a tight pressure bandage"], "ans": "C", "ansText": "C. Immobilize the affected limb with a splint", "exp": "The correct answer is Immobilize the affected limb with a splint.", "key": "Medical Emergency Knowledge"},
+  {"id": 5, "scen": "", "ask": "Which of the following BEST describes the term \"drug affinity\"?", "opts": ["The amount of drug required to produce a desired clinical effect", "The strength or tightness with which a drug binds to its receptor", "The ability of a drug to produce a maximal physiological response after binding", "The duration that a drug remains active in the bloodstream"], "ans": "B", "ansText": "B. The strength or tightness with which a drug binds to its receptor", "exp": "The correct answer is The strength or tightness with which a drug binds to its receptor.", "key": "Medical Emergency Knowledge"},
+  {"id": 6, "scen": "", "ask": "A 28-year-old G2P1 at term is delivering a breech presentation in the back of your ambulance. The body, arms, and shoulders have been delivered, but the head remains in the birth canal for 60 seconds. The umbilical cord is no longer pulsating. What is the MOST APPROPRIATE next action?", "opts": ["Perform McRoberts maneuver", "Apply suprapubic pressure", "Mauriceau-Smellie-Veit maneuver", "Wait for spontaneous delivery"], "ans": "C", "ansText": "C. Mauriceau-Smellie-Veit maneuver", "exp": "The correct answer is Mauriceau-Smellie-Veit maneuver.", "key": "Medical Emergency Knowledge"},
+  {"id": 7, "scen": "", "ask": "A 38-year-old male with a history of IV heroin use presents to the ED with 2 weeks of fever, fatigue, and weight loss. On exam: temp 38.9°C, new tricuspid regurgitation murmur, painless red macules on both palms, splinter hemorrhages under several fingernails, and conjunctival petechiae. What is the MOST LIKELY diagnosis?", "opts": ["Rheumatic fever", "Infective endocarditis", "Vasculitis", "Disseminated gonococcal infection"], "ans": "B", "ansText": "B. Infective endocarditis", "exp": "The correct answer is Infective endocarditis.", "key": "Medical Emergency Knowledge"},
+  {"id": 8, "scen": "", "ask": "A 35-year-old male is brought to the ED following a motor vehicle collision with an open femur fracture. After receiving multiple medications including morphine, ondansetron, ceftriaxone, and tetanus toxoid, he develops new-onset severe epigastric/right upper quadrant abdominal pain and tachycardia. Which medication is the MOST LIKELY cause?", "opts": ["Ondansetron", "Morphine", "Ceftriaxone", "Tetanus toxoid"], "ans": "B", "ansText": "B. Morphine", "exp": "The correct answer is Morphine.", "key": "Medical Emergency Knowledge"},
+  {"id": 9, "scen": "", "ask": "A 55-year-old female presents with sudden-onset dyspnea, pleuritic chest pain, and tachypnea three days after a long-haul flight. Her oxygen saturation is 91% on room air. Which is the MOST COMMON ECG finding in patients with pulmonary embolism?", "opts": ["S1Q3T3 pattern", "Sinus tachycardia", "Right bundle branch block", "Atrial fibrillation"], "ans": "B", "ansText": "B. Sinus tachycardia", "exp": "The correct answer is Sinus tachycardia.", "key": "Medical Emergency Knowledge"},
+  {"id": 10, "scen": "", "ask": "A 9-month-old infant is brought to your attention after choking on a piece of grape. The infant is conscious but unable to cry or cough effectively, and is showing signs of cyanosis. The mother has already attempted back blows without success. What is the MOST APPROPRIATE next action?", "opts": ["Perform abdominal thrusts", "Begin chest compressions immediately", "Continue with 5 chest thrusts", "Perform a blind finger sweep"], "ans": "C", "ansText": "C. Continue with 5 chest thrusts", "exp": "The correct answer is Continue with 5 chest thrusts.", "key": "Medical Emergency Knowledge"},
+  {"id": 11, "scen": "", "ask": "A 4-year-old child is choking on a hot dog at a birthday party. He is conscious, cyanotic, and unable to speak. What is the MOST APPROPRIATE intervention?", "opts": ["5 back blows + 5 chest thrusts", "Heimlich maneuver", "Blind finger sweep", "Mouth-to-mouth ventilation"], "ans": "B", "ansText": "B. Heimlich maneuver", "exp": "The correct answer is Heimlich maneuver.", "key": "Medical Emergency Knowledge"},
+  {"id": 12, "scen": "", "ask": "A 25-year-old male twisted his ankle. He has mild lateral ankle pain, no bony tenderness over either malleolus or midfoot, and can fully bear weight (4+ steps) at the scene and in the ED. Per Ottawa Rules, the MOST APPROPRIATE management is:", "opts": ["X-ray of the ankle", "X-ray of the foot", "No imaging", "Immediate orthopedic consultation"], "ans": "C", "ansText": "C. No imaging", "exp": "The correct answer is No imaging.", "key": "Medical Emergency Knowledge"},
+  {"id": 13, "scen": "", "ask": "A 45-year-old woman twisted her ankle on a wet floor. She has ankle pain and is UNABLE to take more than 2 steps both at the scene and in the ED. Bony palpation is non-tender. Per Ottawa Rules:", "opts": ["X-ray of the ankle is indicated", "No X-ray indicated since palpation is non-tender", "CT scan required", "MRI required"], "ans": "A", "ansText": "A. X-ray of the ankle is indicated", "exp": "The correct answer is X-ray of the ankle is indicated.", "key": "Medical Emergency Knowledge"},
+  {"id": 14, "scen": "", "ask": "A 28-year-old male injured his foot stepping off a curb. He has midfoot pain and bony tenderness over the base of the 5th metatarsal. He can take 2 steps but with significant pain. Per Ottawa Foot Rules, what imaging is indicated?", "opts": ["No imaging required", "X-ray of the ankle only", "X-ray of the foot", "MRI of the foot"], "ans": "C", "ansText": "C. X-ray of the foot", "exp": "The correct answer is X-ray of the foot.", "key": "Medical Emergency Knowledge"},
+  {"id": 15, "scen": "", "ask": "A 35-year-old male is struck in the FRONTAL region of his head with a baseball bat. CT scan reveals a brain contusion. In addition to the frontal lobe injury at the impact site, where is the contrecoup injury MOST LIKELY located?", "opts": ["Right temporal lobe", "Left temporal lobe", "Occipital lobe", "Cerebellum"], "ans": "C", "ansText": "C. Occipital lobe", "exp": "The correct answer is Occipital lobe.", "key": "Medical Emergency Knowledge"},
+  {"id": 16, "scen": "", "ask": "A construction worker in Dubai feels dizzy, nauseated, heavy sweating, temp 38.8°C, mentation intact. Diagnosis?", "opts": ["Heat stroke", "Heat exhaustion", "Heat cramps", "Heat syncope"], "ans": "B", "ansText": "B. Heat exhaustion", "exp": "The correct answer is Heat exhaustion.", "key": "Medical Emergency Knowledge"},
+  {"id": 17, "scen": "", "ask": "A hiker is brought in after falling into a cold stream. He is shivering, alert, T 34°C, clothes soaked. First step?", "opts": ["IV warmed saline", "Remove wet clothing", "Active external rewarming with heating pads", "Hot shower immediately"], "ans": "B", "ansText": "B. Remove wet clothing", "exp": "The correct answer is Remove wet clothing.", "key": "Medical Emergency Knowledge"},
+  {"id": 18, "scen": "", "ask": "A 24-year-old asthmatic in the ED shows a capnography tracing with a sloping, shark-fin–shaped expiratory upstroke. This indicates:", "opts": ["Hyperventilation", "Bronchospasm", "Esophageal intubation", "Cardiac arrest"], "ans": "B", "ansText": "B. Bronchospasm", "exp": "The correct answer is Bronchospasm.", "key": "Medical Emergency Knowledge"},
+  {"id": 19, "scen": "", "ask": "A post-op patient receives 3 doses of IV morphine with no pain relief or sedation. Next best step?", "opts": ["Give IV ketamine", "Check the IV line", "Switch to fentanyl", "Assume opioid tolerance and double the dose"], "ans": "B", "ansText": "B. Check the IV line", "exp": "The correct answer is Check the IV line.", "key": "Medical Emergency Knowledge"},
+  {"id": 20, "scen": "", "ask": "A patient on sertraline presents with agitation, tremor, hyperreflexia, clonus, diaphoresis, and fever after starting tramadol. Diagnosis?", "opts": ["Neuroleptic malignant syndrome", "Malignant hyperthermia", "Serotonin syndrome", "Anticholinergic crisis"], "ans": "C", "ansText": "C. Serotonin syndrome", "exp": "The correct answer is Serotonin syndrome.", "key": "Medical Emergency Knowledge"},
+  {"id": 21, "scen": "", "ask": "Which of the following is a classic sign/symptom of Congestive Heart Failure?", "opts": ["Bradycardia and hypertension", "Orthopnea", "Hemoptysis with night sweats", "Dry cough with weight loss"], "ans": "B", "ansText": "B. Orthopnea", "exp": "The correct answer is Orthopnea.", "key": "Medical Emergency Knowledge"},
+  {"id": 22, "scen": "", "ask": "A trauma patient has dullness to percussion, absent breath sounds and tracheal deviation on the affected side. Diagnosis?", "opts": ["Tension pneumothorax", "Massive hemothorax", "Cardiac tamponade", "Flail chest"], "ans": "B", "ansText": "B. Massive hemothorax", "exp": "The correct answer is Massive hemothorax.", "key": "Medical Emergency Knowledge"},
+  {"id": 23, "scen": "", "ask": "A trauma patient with an open ankle fracture and BP 85/50 mmHg needs urgent analgesia. Best choice?", "opts": ["Morphine", "Fentanyl", "Ketamine", "Midazolam"], "ans": "C", "ansText": "C. Ketamine", "exp": "The correct answer is Ketamine.", "key": "Medical Emergency Knowledge"},
+  {"id": 24, "scen": "", "ask": "A head trauma patient develops hypertension, bradycardia, and irregular respirations. This Cushing's triad indicates:", "opts": ["Spinal shock", "Impending brain herniation", "Hypovolemic shock", "Neurogenic shock"], "ans": "B", "ansText": "B. Impending brain herniation", "exp": "The correct answer is Impending brain herniation.", "key": "Medical Emergency Knowledge"},
+  {"id": 25, "scen": "", "ask": "A 28-year-old male is brought to the Emergency Department following a motor vehicle collision. On assessment: He opens his eyes only to painful stimuli. He makes incomprehensible sounds when spoken to. When painful stimuli are applied, he demonstrates extension of the arms (decerebrate posturing). What is this patient's Glasgow Coma Scale (GCS) score?", "opts": ["5", "6", "7", "8"], "ans": "B", "ansText": "B. 6", "exp": "Eyes: 2, Verbal: 2, Motor: 2. Total GCS = 6.", "key": "Medical Emergency Knowledge"},
+  {"id": 26, "scen": "Questions 26–28 share the same case:\nA 62-year-old male, known diabetic and hypertensive, presents to the Emergency Department with severe crushing retrosternal chest pain radiating to the jaw and left arm for the past 1 hour. The pain is associated with profuse sweating, nausea, and one episode of vomiting.\nOn examination: BP 95/60 mmHg | HR 52 bpm, regular | RR 20/min, SpO₂ 96% on room air | Chest: clear, no crackles | JVP: not raised | Cool peripheries, capillary refill 3 sec\n12-Lead ECG findings: ST-segment elevation in leads II, III, and aVF", "ask": "What is the type of MI?", "opts": ["Anterior STEMI", "Inferior STEMI", "Lateral STEMI", "Posterior STEMI"], "ans": "B", "ansText": "B. Inferior STEMI", "exp": "The correct answer is Inferior STEMI.", "key": "Medical Emergency Knowledge"},
+  {"id": 27, "scen": "", "ask": "(Same case as Q26) Where are the reciprocal ECG changes seen?", "opts": ["V1–V2", "V5–V6", "Leads I and aVL", "II, III, aVF"], "ans": "C", "ansText": "C. Leads I and aVL", "exp": "The correct answer is Leads I and aVL.", "key": "Medical Emergency Knowledge"},
+  {"id": 28, "scen": "", "ask": "(Same case as Q26) What is the change in the QRS complex?", "opts": ["Wide QRS (>120 ms)", "Narrow QRS (<120 ms)", "Delta wave with short PR", "Sine wave pattern"], "ans": "B", "ansText": "B. Narrow QRS (<120 ms)", "exp": "The correct answer is Narrow QRS (<120 ms).", "key": "Medical Emergency Knowledge"},
+  {"id": 29, "scen": "", "ask": "A 45-year-old man presents to the Emergency Department with sudden severe sharp lower back pain after lifting a heavy box. Over the next few hours, he develops numbness in both legs, difficulty walking, and reports a sensation of numbness around his buttocks and groin area. He also states that he is having difficulty controlling his bladder. What is the MOST likely diagnosis?", "opts": ["Spinal injury", "Pericarditis", "Cauda equina syndrome", "Sciatica"], "ans": "C", "ansText": "C. Cauda equina syndrome", "exp": "The correct answer is Cauda equina syndrome.", "key": "Medical Emergency Knowledge"},
+  {"id": 30, "scen": "Questions 30–32 share the same case:\nA 14-year-old boy (weight 30 kg) is brought to the Emergency Department by his mother 1 hour after she found him drowsy in his bedroom next to an empty bottle of his father's antidepressant medication. He had ingested 30 tablets of amitriptyline, 10 mg each, following an argument at school.\nOn examination: GCS 11/15 | T 38.2°C | HR 135 bpm | BP 85/50 mmHg | RR 20/min, SpO₂ 96% RA | Pupils dilated, dry mouth, flushed dry skin, urinary retention | Brief generalized tonic-clonic seizure in ED\n12-Lead ECG: Sinus tachycardia (HR 135) | QRS duration = 145 ms (wide) | Prolonged QTc = 510 ms | Tall R wave (4 mm) in aVR | R/S ratio in aVR > 0.7", "ask": "What is the correct formula to calculate the ingested dose / toxicity?", "opts": ["Number of tablets ÷ Strength per tablet", "Total dose ÷ Body weight", "Body weight × Strength per tablet", "Number of tablets × Body weight"], "ans": "B", "ansText": "B. Total dose ÷ Body weight", "exp": "The correct answer is Total dose ÷ Body weight.", "key": "Medical Emergency Knowledge"},
+  {"id": 31, "scen": "", "ask": "(Same case as Q30) What are the major COMPLICATIONS of TCA toxicity?", "opts": ["Hyperkalemia, renal failure, hemolysis", "Cardiotoxicity, CNS toxicity, Anticholinergic toxidrome", "Hepatotoxicity and coagulopathy", "Pulmonary fibrosis and ARDS"], "ans": "B", "ansText": "B. Cardiotoxicity, CNS toxicity, Anticholinergic toxidrome", "exp": "The correct answer is Cardiotoxicity, CNS toxicity, Anticholinergic toxidrome.", "key": "Medical Emergency Knowledge"},
+  {"id": 32, "scen": "", "ask": "(Same case as Q30) How will you TREAT the complications of TCA toxicity?", "opts": ["Activated charcoal + flumazenil + phenytoin + airway support", "Sodium bicarbonate + IV fluids + benzodiazepines + airway support", "Amiodarone + procainamide + hemodialysis + airway support", "Naloxone + N-acetylcysteine + atropine + airway support"], "ans": "B", "ansText": "B. Sodium bicarbonate + IV fluids + benzodiazepines + airway support", "exp": "The correct answer is Sodium bicarbonate + IV fluids + benzodiazepines + airway support.", "key": "Medical Emergency Knowledge"},
+  {"id": 33, "scen": "", "ask": "A 6-year-old boy is rescued from a swimming pool after 2 minutes submersion. He is unresponsive and not breathing. What is the first action?", "opts": ["Start chest compressions immediately (30:2)", "Open airway and give 5 rescue breaths", "Perform Heimlich maneuver to remove water", "Place in recovery position"], "ans": "B", "ansText": "B. Open airway and give 5 rescue breaths", "exp": "The correct answer is Open airway and give 5 rescue breaths.", "key": "Medical Emergency Knowledge"},
+  {"id": 34, "scen": "", "ask": "You are a paramedic working a 12-hour shift with your EMS partner of 3 years. Over the past 2 months—ever since you both responded to a fatal pediatric MVC—you have noticed a worrying change in his behavior: he has become irritable and withdrawn during shifts, reports frequent nightmares and poor sleep, deliberately avoids the route where the accident occurred, recently had a panic episode while responding to a similar call, has started drinking more heavily after shifts, appears emotionally numb and disengaged during family-related calls, and today—after a particularly difficult run—he suddenly snaps at you and says, \"I just can't do this anymore.\" What is the BEST way to deal with your partner showing signs of PTSD?", "opts": ["Ignore it — it's a personal matter", "Report him directly to management for removal from duty", "Approach with empathy, encourage professional help", "Tell him to \"toughen up\" — it's part of the job"], "ans": "C", "ansText": "C. Approach with empathy, encourage professional help", "exp": "The correct answer is Approach with empathy, encourage professional help.", "key": "Medical Emergency Knowledge"},
+  {"id": 35, "scen": "", "ask": "A 45-year-old male is dining at a restaurant when he suddenly clutches his throat. On your arrival, he is conscious, standing, coughing forcefully, with visible cyanosis around the lips. He cannot speak in full sentences but is making strong coughing efforts. What is the BEST initial management for this patient?", "opts": ["Bag-Valve-Mask (BVM) ventilation", "Magill forceps removal", "5 back blows + 5 chest thrusts", "Encourage him to continue coughing"], "ans": "D", "ansText": "D. Encourage him to continue coughing", "exp": "The correct answer is Encourage him to continue coughing.", "key": "Medical Emergency Knowledge"},
+  {"id": 36, "scen": "Patient A: Traumatic arm amputation with a tourniquet applied, bleeding controlled, conscious, BP 110/70\nPatient B: Cardiac arrest — pulseless, apneic, no shockable rhythm\nPatient C: Facial laceration, alert, walking, minor bleeding\nPatient D: Tachypneic (RR 36/min), SpO₂ 88%, accessory muscle use, confused", "ask": "You are the triage officer at a mass casualty incident. Four patients arrive simultaneously:", "opts": ["B → A → D → C", "D → A → C → B", "A → B → C → D", "C → D → A → B"], "ans": "B", "ansText": "B. D → A → C → B", "exp": "The correct answer is D → A → C → B.", "key": "Medical Emergency Knowledge"},
+  {"id": 37, "scen": "", "ask": "A 28-year-old known asthmatic is brought to the ED after spending a prolonged period outdoors in cold weather. He presents with audible wheezing, dyspnea, and chest tightness. Paramedics started a salbutamol nebulizer en route, but on arrival the patient shows no significant improvement — wheezing persists, SpO₂ 91%, RR 28, HR 110. What is the most likely reason for the lack of response to the nebulizer?", "opts": ["Wrong drug given", "Cold air itself triggers bronchospasm", "Patient is non-compliant", "Salbutamol is contraindicated in asthma"], "ans": "B", "ansText": "B. Cold air itself triggers bronchospasm", "exp": "The correct answer is Cold air itself triggers bronchospasm.", "key": "Medical Emergency Knowledge"},
+  {"id": 38, "scen": "Drowsy, weak, lethargic | T 38.5°C | HR 130 bpm | BP 80/50 mmHg | RR 22/min\nDry mucous membranes, hyperpigmentation of skin\nLabs: Na⁺ 125 (low), K⁺ 6.0 (high), glucose 55 (low)", "ask": "A 35-year-old female with a known history of Addison's disease (on chronic hydrocortisone replacement) presents to the ED with sudden severe vomiting and profuse diarrhea for the past 6 hours. She missed her morning dose of medication.", "opts": ["Oral hydrocortisone 20 mg", "IV Hydrocortisone 100 mg", "IV insulin for hyperkalemia", "IV antibiotics"], "ans": "B", "ansText": "B. IV Hydrocortisone 100 mg", "exp": "The correct answer is IV Hydrocortisone 100 mg.", "key": "Medical Emergency Knowledge"},
+  {"id": 39, "scen": "Questions 39–40 share the same case:\nYou are a paramedic called to a home where an 18-year-old female has just delivered a baby and is bleeding heavily. She appears frightened, withdrawn, and avoids eye contact. An older man (claiming to be her husband) answers all your questions on her behalf, refuses to var her speak, and stands very close to her, monitoring everything she does. When you try to address her directly, he interrupts.", "ask": "What is the MOST appropriate initial action?", "opts": ["Immediately contact the police about the old man", "Handover the patient to the hospital and leave without comment", "Confront the old man aggressively — \"Who are you?\"", "Politely but firmly separate the patient from the man"], "ans": "D", "ansText": "D. Politely but firmly separate the patient from the man", "exp": "The correct answer is Politely but firmly separate the patient from the man.", "key": "Medical Emergency Knowledge"},
+  {"id": 40, "scen": "", "ask": "(Same case as Q39) Why did the bleeding happen?", "opts": ["Placenta previa", "PPH", "Vertigo", "Normal lochia"], "ans": "B", "ansText": "B. PPH (Postpartum Haemorrhage)", "exp": "The correct answer is PPH (Postpartum Haemorrhage).", "key": "Medical Emergency Knowledge"},
+  {"id": 41, "scen": "", "ask": "A 25-year-old male is brought to ED with 6 months of auditory hallucinations, paranoid delusions (neighbors spying), disorganized speech, social withdrawal, and aggression. Most likely diagnosis?", "opts": ["Bipolar disorder", "Major depressive disorder", "Schizophrenia", "Generalized anxiety disorder"], "ans": "C", "ansText": "C. Schizophrenia", "exp": "The correct answer is Schizophrenia.", "key": "Medical Emergency Knowledge"},
+  {"id": 42, "scen": "", "ask": "A 28-year-old male is brought to ED after a motor vehicle accident. He has severe facial trauma, active oral bleeding, multiple loose/avulsed teeth, and a swollen tongue. He is conscious, GCS 14, breathing spontaneously. C-spine has been cleared. What is the BEST position for this patient?", "opts": ["Supine flat", "Trendelenburg (head down)", "Sitting up and leaning forward", "Prone"], "ans": "C", "ansText": "C. Sitting up and leaning forward", "exp": "The correct answer is Sitting up and leaning forward.", "key": "Medical Emergency Knowledge"},
+  {"id": 43, "scen": "", "ask": "A 34-year-old woman is brought to the Emergency Department after an accident while cooking. She was carrying a large pot of boiling soup when she slipped, causing the hot liquid to spill over her body. On assessment, she has partial-thickness burns involving the entire anterior surface of both arms and the entire anterior torso. She is alert and complaining of severe pain. Her vital signs are stable. Using the Rule of Nines for an adult, what is the estimated total body surface area (TBSA) burned?", "opts": ["9%", "18%", "27%", "36%"], "ans": "C", "ansText": "C. 27%", "exp": "The correct answer is 27%.", "key": "Medical Emergency Knowledge"},
+  {"id": 44, "scen": "", "ask": "A 19-year-old male is brought to the ER 10 minutes after being stung by a bee at a park. He is alert and says \"I can't breathe.\" On examination: generalized urticaria all over the body, lip and tongue swelling, audible wheezing bilaterally, and BP = 78/50 mmHg, HR = 128 bpm, SpO₂ = 91%. He has no known drug allergies but was stung by bees before. What is the MOST appropriate FIRST-LINE treatment?", "opts": ["IV Diphenhydramine 50 mg", "Nebulized Salbutamol", "IM Epinephrine 0.5 mg", "IV Hydrocortisone 200 mg"], "ans": "C", "ansText": "C. IM Epinephrine 0.5 mg", "exp": "The correct answer is IM Epinephrine 0.5 mg.", "key": "Medical Emergency Knowledge"},
+  {"id": 45, "scen": "", "ask": "You are a paramedic dispatched to a residential address. On arrival you find a 5-year-old boy sitting quietly in the corner of the living room. His mother states he \"fell from a tree in the garden earlier today.\" She appears nervous and avoids eye contact. The child does not speak and flinches when you approach him. On assessment you find multiple bruises on his back, buttocks, and upper arms in mixed stages of healing — some yellowish (old) and some dark purple (recent) — with no bruises on his knees or shins. His mother first says the fall happened in the morning, then changes her story to the afternoon. Vital signs are stable (HR 105, RR 22, SpO₂ 99%, GCS 15). As the attending paramedic, what is the MOST appropriate interpretation of this presentation?", "opts": ["Accidental trauma consistent with falling from a tree", "Neglect only — the family delayed seeking medical care", "Child physical abuse", "Bleeding disorder such as ITP or haemophilia"], "ans": "C", "ansText": "C. Child physical abuse", "exp": "The correct answer is Child physical abuse.", "key": "Medical Emergency Knowledge"},
+  {"id": 46, "scen": "", "ask": "In the DRcABC primary survey framework, what does the small \"c\" stand for and why does it come BEFORE the Airway?", "opts": ["Cervical spine — must be immobilised before airway management", "Circulation — pulse must be checked before breathing", "Catastrophic haemorrhage — arterial bleeding can cause death within minutes and must be controlled immediately", "C-spine — jaw thrust must replace head-tilt before any assessment"], "ans": "C", "ansText": "C. Catastrophic haemorrhage", "exp": "The correct answer is Catastrophic haemorrhage.", "key": "Medical Emergency Knowledge"},
+  {"id": 47, "scen": "", "ask": "A 45-year-old man presents with sudden right-sided facial weakness. He cannot raise his right eyebrow, cannot close his right eye, and has drooping of the right side of his mouth. What is the MOST likely diagnosis?", "opts": ["Left-sided stroke", "Right-sided stroke", "Bell's Palsy", "Multiple Sclerosis"], "ans": "C", "ansText": "C. Bell's Palsy", "exp": "The correct answer is Bell's Palsy.", "key": "Medical Emergency Knowledge"},
+  {"id": 48, "scen": "", "ask": "A paramedic is inserting an IV cannula into a patient's arm. The distance between the paramedic and the patient is approximately 30–40 cm. According to Edward Hall's proxemics theory, what zone of personal space does this represent?", "opts": ["Social zone", "Personal zone", "Intimate zone", "Professional zone"], "ans": "C", "ansText": "C. Intimate zone", "exp": "The correct answer is Intimate zone.", "key": "Medical Emergency Knowledge"},
+  {"id": 49, "scen": "", "ask": "A 25-year-old woman is found wandering naked in her neighborhood. She reports that voices from the television instructed her to free the animals in the street. On examination, she appears disorganized and insists the voices are real. What is the most likely diagnosis?", "opts": ["Delirium", "Acute Psychosis", "Mania", "Personality Disorder"], "ans": "B", "ansText": "B. Acute Psychosis", "exp": "The correct answer is Acute Psychosis.", "key": "Medical Emergency Knowledge"},
+  {"id": 50, "scen": "", "ask": "A researcher wants to study the effect of yoga on stress reduction among university students. Which part of the PICO framework does \"university students with high stress levels\" represent?", "opts": ["Intervention", "Comparison", "Patient/Problem", "Outcome"], "ans": "C", "ansText": "C. Patient/Problem", "exp": "The correct answer is Patient/Problem.", "key": "Medical Emergency Knowledge"},
+  {"id": 51, "scen": "", "ask": "You hand over a 65yo female with chest pain to ED: 'This is Fatima, 65, chest pain onset while cooking. She has central crushing pain, pale, diaphoretic. Vitals: BP 88/50, HR 110, SpO2 94%. We gave aspirin 300mg, GTN spray, IV access. She takes metformin for diabetes. Past MI 2019.' ED doctor later gives penicillin and she develops anaphylaxis. Which IMIST-AMBO component did you miss?", "opts": ["I – Identification", "S – Signs", "A – Allergies", "B – Background"], "ans": "C", "ansText": "C. A – Allergies", "exp": "Handover missing allergy information led to anaphylaxis.", "key": "Medical Emergency Knowledge"},
+  {"id": 52, "scen": "", "ask": "You treat a 19-year-old female after a minor RTC. She is crying, shaking, repeatedly saying \"I thought I was going to die.\" You complete a perfect primary survey, document everything, splint her wrist efficiently, and say: \"Vitals stable, you're fine, we'll be at hospital in 10 minutes,\" then turn away to clean the stretcher. Technically competent, but which pillar of professionalism is MISSING?", "opts": ["Accountability", "Integrity", "Excellence", "Compassion"], "ans": "D", "ansText": "D. Compassion", "exp": "The correct answer is Compassion.", "key": "Medical Emergency Knowledge"},
+  {"id": 53, "scen": "", "ask": "28-year-old male, stab wound to chest, now in TCA on scene. Your team: Applies pelvic binder and gives blood for Hypovolaemia, Intubates and ventilates with 100% O2 for Oxygenation, performs bilateral finger thoracostomies for Tension pneumothorax, you leave him exposed on wet ground, no blankets, IV fluids are cold, after 5 minutes, core temp is 33°C and coagulopathy worsens. Which HOTT-related principle is MISSING in this scenario?", "opts": ["Hypovolemia control", "Oxygenation", "Tension pneumothorax decompression", "Hypothermia prevention"], "ans": "D", "ansText": "D. Hypothermia prevention", "exp": "Exposure and cold fluids led to hypothermia, a critical part of HOTT.", "key": "Medical Emergency Knowledge"},
+  {"id": 54, "scen": "", "ask": "A 28-year-old woman presents with sudden onset shortness of breath and sharp chest pain that worsens with inspiration. She has no past medical history but has been taking a combined oral contraceptive pill for the past 6 months. Her vitals show HR 110/min, RR 24/min, and SpO₂ 91% on room air. Lung exam is clear. ECG shows sinus tachycardia. What is the most likely diagnosis?", "opts": ["Spontaneous pneumothorax", "Pulmonary embolism", "Acute pericarditis", "Panic attack"], "ans": "B", "ansText": "B. Pulmonary embolism", "exp": "The correct answer is Pulmonary embolism.", "key": "Medical Emergency Knowledge"},
+  {"id": 55, "scen": "", "ask": "A 29-year-old male develops calf pain after intense exercise in hot weather. He reports dehydration and long periods of sitting at work. Most likely diagnosis:", "opts": ["Muscle strain", "DVT", "Cellulitis", "Achilles tendinopathy"], "ans": "B", "ansText": "B. DVT", "exp": "The correct answer is DVT.", "key": "Medical Emergency Knowledge"},
+  {"id": 56, "scen": "", "ask": "A 78-year-old man is brought by his family because he has recently started passing urine on his clothes. During assessment, you ask him a simple orientation question. He gives an incorrect answer. When you repeat the same question a minute later, he gives the correct answer. What is the most likely explanation for this pattern?", "opts": ["Early Alzheimer's dementia", "Delirium with fluctuating attention", "Depression-related pseudodementia", "Normal age-related forgetfulness"], "ans": "B", "ansText": "B. Delirium with fluctuating attention", "exp": "The correct answer is Delirium with fluctuating attention.", "key": "Medical Emergency Knowledge"},
+  {"id": 57, "scen": "", "ask": "A 24-year-old man presents with sudden-onset palpitations. His heart rate is 180/min, blood pressure 120/80 mmHg, and he is fully alert. ECG shows a regular narrow-complex tachycardia. He is hemodynamically stable. What is the MOST appropriate next step in management?", "opts": ["Begin with a Valsalva manoeuvre as the first-line non-pharmacological intervention, and if this fails to terminate the tachycardia, proceed to administer rapid IV adenosine as the next step", "Administer IV adenosine immediately as the first step without attempting any vagal manoeuvres, assuming the rhythm will respond directly to pharmacological therapy", "Start IV amiodarone infusion as the primary treatment for this narrow-complex tachycardia, even though the patient is stable and other first-line options exist", "Perform immediate synchronized cardioversion despite the patient being hemodynamically stable and without trying any less invasive measures first"], "ans": "A", "ansText": "A. Begin with a Valsalva manoeuvre as the first-line non-pharmacological intervention, then proceed to IV adenosine if unsuccessful", "exp": "The correct answer is Begin with a Valsalva manoeuvre as the first-line non-pharmacological intervention, then proceed to IV adenosine if unsuccessful.", "key": "Medical Emergency Knowledge"},
+  {"id": 58, "scen": "", "ask": "A 68-year-old man presents with wide-complex tachycardia at HR 200/min. The rhythm suddenly changes to atrial fibrillation, and he becomes hypotensive and confused. What is the immediate management?", "opts": ["Synchronized cardioversion", "Start IV amiodarone infusion", "Give IV adenosine", "Begin rate control with IV beta-blocker"], "ans": "A", "ansText": "A. Synchronized cardioversion", "exp": "The correct answer is Synchronized cardioversion.", "key": "Medical Emergency Knowledge"},
+  {"id": 59, "scen": "", "ask": "A 21-year-old man presents with sudden-onset palpitations. ECG shows a narrow-complex tachycardia at 180/min. A previous ECG from last year showed a delta wave. He is hemodynamically stable. What is the MOST appropriate initial management?", "opts": ["Start with Valsalva manoeuvre, then give adenosine if unsuccessful", "Give IV adenosine immediately without attempting vagal manoeuvres", "Start IV amiodarone because of the history of WPW", "Perform synchronized cardioversion despite the patient being stable"], "ans": "A", "ansText": "A. Start with Valsalva manoeuvre, then give adenosine if unsuccessful", "exp": "The correct answer is Start with Valsalva manoeuvre, then give adenosine if unsuccessful.", "key": "Medical Emergency Knowledge"},
+  {"id": 60, "scen": "", "ask": "A 40-year-old woman with RUQ pain has a positive Murphy sign. What is the diagnosis?", "opts": ["Acute cholecystitis", "Biliary colic", "Pancreatitis", "Hepatitis"], "ans": "A", "ansText": "A. Acute cholecystitis", "exp": "The correct answer is Acute cholecystitis.", "key": "Medical Emergency Knowledge"},
+  {"id": 61, "scen": "", "ask": "A 28-year-old man presents with right lower quadrant abdominal pain and low-grade fever. Pain increases when he extends his right hip while lying on his left side. This physical finding is known as a positive psoas sign. What is the most likely diagnosis?", "opts": ["Acute appendicitis", "Acute cholecystitis", "Renal colic", "Diverticulitis"], "ans": "A", "ansText": "A. Acute appendicitis", "exp": "The correct answer is Acute appendicitis.", "key": "Medical Emergency Knowledge"},
+  {"id": 62, "scen": "", "ask": "A 30-year-old man arrives with a stab wound to the abdomen. He is agitated and trying to remove the dressing. You are the first responder at the scene. What is the MOST appropriate immediate action?", "opts": ["Ensure your own safety first and call for help before approaching the patient", "Immediately insert your fingers into the wound to check for internal bleeding", "Attempt to remove the object to prevent further internal damage", "Give the patient oral fluids to prevent dehydration"], "ans": "A", "ansText": "A. Ensure your own safety first and call for help before approaching the patient", "exp": "The correct answer is Ensure your own safety first and call for help before approaching the patient.", "key": "Medical Emergency Knowledge"},
+  {"id": 63, "scen": "", "ask": "A 55-year-old man undergoes a routine ECG. The tracing shows a normal QRS complex and normal rhythm, but the PR interval is prolonged. What PR interval duration defines first-degree AV block?", "opts": ["More than 0.20 seconds", "More than 0.12 seconds", "Less than 0.10 seconds", "Exactly 0.16 seconds"], "ans": "A", "ansText": "A. More than 0.20 seconds", "exp": "The correct answer is More than 0.20 seconds.", "key": "Medical Emergency Knowledge"},
+  {"id": 64, "scen": "", "ask": "A 70-year-old man presents with exertional dyspnea and chest discomfort. On auscultation, you hear an S3 gallop best at the right 2nd intercostal space near the sternal border. Which condition is most strongly suggested by this finding?", "opts": ["Aortic stenosis", "Mitral regurgitation", "Tricuspid regurgitation", "Pulmonary hypertension"], "ans": "A", "ansText": "A. Aortic stenosis", "exp": "The correct answer is Aortic stenosis.", "key": "Medical Emergency Knowledge"},
+  {"id": 65, "scen": "", "ask": "Which of the following BEST defines a sprain?", "opts": ["Injury to a ligament due to overstretching or tearing", "Injury to a muscle or tendon from overstretching", "Bruising of soft tissue without structural damage", "Fracture of bone without displacement"], "ans": "A", "ansText": "A. Injury to a ligament due to overstretching or tearing", "exp": "The correct answer is Injury to a ligament due to overstretching or tearing.", "key": "Medical Emergency Knowledge"},
+  {"id": 66, "scen": "", "ask": "A 40-year-old woman presents with recurrent episodes of chest pain occurring at rest, often waking her from sleep. ECG during the pain shows transient ST-segment elevation that resolves completely afterward. She has no history of exertional symptoms. What is the most likely diagnosis?", "opts": ["Prinzmetal", "Stable angina", "Unstable angina", "NSTEMI"], "ans": "A", "ansText": "A. Prinzmetal (Variant angina)", "exp": "The correct answer is Prinzmetal (Variant angina).", "key": "Medical Emergency Knowledge"},
+  {"id": 67, "scen": "", "ask": "A 56-year-old patient has achieved return of spontaneous circulation (ROSC) after cardiac arrest. He is intubated, spontaneously breathing, and being prepared for inter-hospital transport. You are tasked with setting up ventilatory support. Which of the following ventilator settings is MOST appropriate during transport?", "opts": ["Tidal volume 10–12 mL/kg, FiO₂ 100%, PEEP 0 cmH₂O", "Tidal volume 4–6 mL/kg, FiO₂ 100%, PEEP 10–15 cmH₂O", "Tidal volume 6–8 mL/kg, FiO₂ SpO₂ 94–98%, PEEP 5 cmH₂O", "Tidal volume 12–15 mL/kg, FiO₂ 50%, PEEP 0 cmH₂O"], "ans": "C", "ansText": "C. Tidal volume 6–8 mL/kg, FiO₂ SpO₂ 94–98%, PEEP 5 cmH₂O", "exp": "The correct answer is Tidal volume 6–8 mL/kg, FiO₂ SpO₂ 94–98%, PEEP 5 cmH₂O.", "key": "Medical Emergency Knowledge"},
+  {"id": 68, "scen": "", "ask": "Which of the following BEST defines pharmacokinetics?", "opts": ["What the body does to the drug", "What the drug does to the body", "The study of drug–receptor interactions", "The clinical effects produced by a medication"], "ans": "A", "ansText": "A. What the body does to the drug", "exp": "The correct answer is What the body does to the drug.", "key": "Medical Emergency Knowledge"},
+  {"id": 69, "scen": "", "ask": "An elderly patient presents with nausea, vomiting, abdominal distension, and has not passed stool for several days. The paramedic suspects bowel obstruction. Which antiemetic is the MOST appropriate to administer?", "opts": ["Ondansetron", "Metoclopramide", "Domperidone", "Prochlorperazine"], "ans": "A", "ansText": "A. Ondansetron", "exp": "The correct answer is Ondansetron.", "key": "Medical Emergency Knowledge"},
+  {"id": 70, "scen": "", "ask": "A 68-year-old man is brought to the emergency department with severe abdominal pain and vomiting. On examination, you notice bluish discoloration and bruising around the umbilicus. His blood pressure is low, and he appears pale and sweaty. Which clinical sign does this finding represent?", "opts": ["Cullen sign", "Grey Turner sign", "Murphy sign", "Rovsing sign"], "ans": "A", "ansText": "A. Cullen sign", "exp": "The correct answer is Cullen sign.", "key": "Medical Emergency Knowledge"},
+  {"id": 71, "scen": "", "ask": "A patient has been stabbed in the neck at the level of C6. He is still standing, holding pressure on the wound, and bleeding is controlled. As a paramedic, what is the MOST appropriate way to manage him?", "opts": ["Let the patient walk to the ambulance", "Manual C-spine stabilisation and transfer to a spine board from standing", "Apply a C-collar and transfer to a scoop stretcher", "Let the patient lie down on the spine board by himself"], "ans": "B", "ansText": "B. Manual C-spine stabilisation and transfer to a spine board from standing", "exp": "The correct answer is Manual C-spine stabilisation and transfer to a spine board from standing.", "key": "Medical Emergency Knowledge"},
+  {"id": 72, "scen": "", "ask": "A 24-year-old sexually active woman presents with sudden onset lower abdominal pain and light vaginal spotting. She reports missing her last period and has not been consistent with her contraceptive pills. What is the MOST likely diagnosis?", "opts": ["Appendicitis", "Pancreatitis", "Ectopic pregnancy", "Gastritis"], "ans": "C", "ansText": "C. Ectopic pregnancy", "exp": "The correct answer is Ectopic pregnancy.", "key": "Medical Emergency Knowledge"},
+  {"id": 73, "scen": "", "ask": "A 72-year-old man presents with dizziness and near-syncope. His ECG shows regular P waves and regular QRS complexes, but they occur independently with no consistent relationship between them. What is the MOST likely diagnosis?", "opts": ["First-degree AV block", "Second-degree AV block", "Third-degree AV block", "Premature ventricular contraction (PVC)"], "ans": "C", "ansText": "C. Third-degree AV block", "exp": "The correct answer is Third-degree AV block.", "key": "Medical Emergency Knowledge"},
+  {"id": 74, "scen": "", "ask": "You are a paramedic working with another paramedic partner and a student. The student keeps repeating the same mistake and is starting to lose confidence. What is the MOST appropriate way to manage this situation?", "opts": ["Let him learn by making mistakes", "Ask him to observe you but do not var him work without supervision", "Ask your paramedic partner to teach him and give constructive feedback", "Ignore the issue and continue the shift normally"], "ans": "C", "ansText": "C. Ask your paramedic partner to teach him and give constructive feedback", "exp": "The correct answer is Ask your paramedic partner to teach him and give constructive feedback.", "key": "Medical Emergency Knowledge"},
+  {"id": 75, "scen": "", "ask": "A 16-year-old girl is brought to the Emergency Department 2 hours after intentionally ingesting 30 tablets of paracetamol 500 mg. She is alert but complains of nausea and has vomited once. What is the specific antidote for paracetamol poisoning?", "opts": ["Naloxone", "Flumazenil", "NAC", "Atropine"], "ans": "C", "ansText": "C. NAC (N-Acetylcysteine)", "exp": "The correct answer is NAC (N-Acetylcysteine).", "key": "Medical Emergency Knowledge"},
+  {"id": 76, "scen": "", "ask": "A 67-year-old man is brought in by ambulance after suddenly developing slurred speech and right-sided weakness. On examination, you notice marked drooping of his right upper eyelid (ptosis). His pupils are equal and reactive, and he is alert but confused. Which nerve is MOST likely affected?", "opts": ["Phrenic nerve", "Splenic nerve", "Cranial Nerve III – Oculomotor", "Cranial Nerve VII – Facial nerve"], "ans": "C", "ansText": "C. Cranial Nerve III – Oculomotor", "exp": "The correct answer is Cranial Nerve III – Oculomotor.", "key": "Medical Emergency Knowledge"},
+  {"id": 77, "scen": "", "ask": "You arrive at a gym where a 55-year-old male suddenly collapsed during exercise. He is unresponsive, not breathing normally, and has no palpable pulse. The monitor shows a wide-complex, rapid ventricular tachycardia. What is the MOST appropriate immediate management?", "opts": ["Synchronized cardioversion", "Defibrillation", "Administer oxygen only", "Check blood pressure first"], "ans": "B", "ansText": "B. Defibrillation", "exp": "The correct answer is Defibrillation.", "key": "Medical Emergency Knowledge"},
+  {"id": 78, "scen": "", "ask": "A 48-year-old male is brought in after a fall from height. He is unconscious. The paramedic report states the patient is showing Cushing's triad on arrival. Which combination of vital signs BEST matches this finding?", "opts": ["Hypertension, bradycardia, and irregular respirations", "Hypotension, tachycardia, and rapid respirations", "Bradycardia, hypotension, and warm dry skin", "Tachycardia, hypertension, and normal respirations"], "ans": "A", "ansText": "A. Hypertension, bradycardia, and irregular respirations", "exp": "The correct answer is Hypertension, bradycardia, and irregular respirations.", "key": "Medical Emergency Knowledge"},
+  {"id": 79, "scen": "", "ask": "You are transferring a 58-year-old male with chest pain to the ED. En route, he suddenly becomes unconscious. He is breathing at a rate of 6 breaths per minute. What should the paramedic do FIRST?", "opts": ["Position the airway and ventilate", "Tap on the shoulder and check for response", "Consider this agonal gasping and start CPR", "Check the carotid pulse"], "ans": "D", "ansText": "D. Check the carotid pulse", "exp": "The correct answer is Check the carotid pulse.", "key": "Medical Emergency Knowledge"},
+  {"id": 80, "scen": "", "ask": "A 29-year-old woman has delivered vaginally and is now experiencing heavy postpartum bleeding. You estimate blood loss to be more than 700 mL. She is pale, tachycardic, and becoming increasingly anxious. What is the MOST appropriate immediate management?", "opts": ["Fundal massage + high-flow oxygen + establish large-bore IV access + give IV fluids + consider tranexamic acid (TXA) + rapid transport", "Place the patient in Trendelenburg position + continue observation without active intervention + monitor vitals closely", "Provide oral fluids + offer reassurance + delay intervention while reassessing bleeding in 10 minutes", "Apply cold compresses to the abdomen only + avoid uterine massage + wait to see if bleeding slows spontaneously"], "ans": "A", "ansText": "A. Fundal massage + high-flow oxygen + establish large-bore IV access + give IV fluids + consider tranexamic acid (TXA) + rapid transport", "exp": "The correct answer is Fundal massage + high-flow oxygen + establish large-bore IV access + give IV fluids + consider tranexamic acid (TXA) + rapid transport.", "key": "Medical Emergency Knowledge"},
+  {"id": 81, "scen": "", "ask": "Police bring a 32-year-old male who is extremely aggressive, delirious, sweating heavily, and holding a knife before being restrained in the prone position. He is shouting, threatening to bite police and paramedics, and appears severely hyperthermic. He verbalizes that he can breathe. What is the MOST appropriate management?", "opts": ["Speak directly to the patient, attempt verbal calming, and order police to remove restraints", "Cool the patient aggressively and administer a fast-acting tranquilizer for chemical restraint", "Sit the patient upright and apply oxygen while maintaining verbal reassurance", "Allow the patient to remain in the same prone restraint position without intervention"], "ans": "B", "ansText": "B. Cool the patient aggressively and administer a fast-acting tranquilizer for chemical restraint", "exp": "The correct answer is Cool the patient aggressively and administer a fast-acting tranquilizer for chemical restraint.", "key": "Medical Emergency Knowledge"},
+  {"id": 82, "scen": "", "ask": "A 20-year-old male collapses during football practice complaining of severe muscle cramps. His teammates report he consumed a large amount of potassium-rich fruits, including several bananas, before the game. On arrival, he is alert but weak. ECG shows tall, peaked T waves. What is the MOST likely diagnosis?", "opts": ["Hyperkalemia", "Hypokalemia", "Hypocalcemia", "Hyponatremia"], "ans": "A", "ansText": "A. Hyperkalemia", "exp": "The correct answer is Hyperkalemia.", "key": "Medical Emergency Knowledge"},
+  {"id": 83, "scen": "", "ask": "You arrive at the scene of a warehouse explosion. Ten injured people are already outside the building, and several of them tell you that more victims are still trapped inside. Flames and thick smoke are visible from the entrance. What should you do FIRST?", "opts": ["Enter the building immediately to search for the trapped victims", "Wait for fire rescue, ensure scene safety, request additional ambulances, and prepare to treat patients once they are brought out", "Attempt to crawl inside the building while holding your breath to avoid smoke", "Move the uninjured bystanders closer to the building to help with rescue efforts"], "ans": "B", "ansText": "B. Wait for fire rescue, ensure scene safety, request additional ambulances, and prepare to treat patients once they are brought out", "exp": "The correct answer is Wait for fire rescue, ensure scene safety, request additional ambulances, and prepare to treat patients once they are brought out.", "key": "Medical Emergency Knowledge"},
+  {"id": 84, "scen": "", "ask": "A 24-year-old male with type 1 diabetes presents with vomiting, abdominal pain, and deep rapid breathing. His blood glucose is 480 mg/dL, and he appears dehydrated. Which of the following is NOT a typical feature of diabetic ketoacidosis (DKA)?", "opts": ["Polydipsia", "Rapid, deep breathing (Kussmaul respirations)", "Abdominal pain", "Hypertension"], "ans": "D", "ansText": "D. Hypertension", "exp": "The correct answer is Hypertension.", "key": "Medical Emergency Knowledge"},
+  {"id": 85, "scen": "", "ask": "When administering midazolam rectally for seizure control, what is the typical absorption/onset time?", "opts": ["2–3 minutes", "5–15 minutes", "10–30 minutes", "20–40 minutes"], "ans": "B", "ansText": "B. 5–15 minutes", "exp": "The correct answer is 5–15 minutes.", "key": "Medical Emergency Knowledge"},
+  {"id": 86, "scen": "", "ask": "Which of the following medications is administered via the enteral route?", "opts": ["Aspirin", "Epinephrine", "Salbutamol", "Adrenaline IM"], "ans": "A", "ansText": "A. Aspirin", "exp": "The correct answer is Aspirin.", "key": "Medical Emergency Knowledge"},
+  {"id": 87, "scen": "", "ask": "Which medication is administered via the parenteral route?", "opts": ["Epinephrine", "Ibuprofen", "Aspirin", "Paracetamol oral"], "ans": "A", "ansText": "A. Epinephrine", "exp": "The correct answer is Epinephrine.", "key": "Medical Emergency Knowledge"},
+  {"id": 88, "scen": "", "ask": "An 18-year-old male is found unconscious at a public event. EMS initiates airway management and prepares for transport to the hospital. Two of his friends arrive at the scene and request to accompany him in the ambulance during transfer. What is the MOST appropriate response by the paramedic?", "opts": ["Allow both friends to accompany the patient in the ambulance for emotional support", "Allow one friend only if space is available in the patient compartment", "For safety and patient care, only EMS personnel will accompany the patient.", "Deny access and ask security to remove them forcibly from the scene"], "ans": "C", "ansText": "C. For safety and patient care, only EMS personnel will accompany the patient.", "exp": "Only EMS personnel should accompany an unconscious patient for safety and care reasons.", "key": "Medical Emergency Knowledge"},
+  {"id": 89, "scen": "", "ask": "A 6-year-old child is in pulseless ventricular fibrillation. Defibrillation is required. Choose the correct initial shock energy:", "opts": ["80 J", "200 J", "100 J", "120 J"], "ans": "A", "ansText": "A. 80 J", "exp": "The correct answer is 80 J.", "key": "Medical Emergency Knowledge"},
+  {"id": 90, "scen": "", "ask": "A 28-year-old motorcyclist is brought to the ED after a crash. He is alert but reports complete loss of sensation around the umbilicus and below it. Motor power in the legs is reduced, but upper-body sensation is intact. Which spinal dermatome level is MOST likely affected?", "opts": ["T8", "T9", "T10", "T12"], "ans": "C", "ansText": "C. T10", "exp": "The correct answer is T10.", "key": "Medical Emergency Knowledge"},
+  {"id": 91, "scen": "", "ask": "A patient involved in a high-speed motor vehicle collision presents with a spider-web pattern windshield crack injury mechanism. On examination, the patient has bilateral periorbital ecchymosis and is confused. What is the most likely underlying injury?", "opts": ["Mandibular fracture", "Basilar skull fracture", "Orbital floor fracture", "Cervical spine strain"], "ans": "B", "ansText": "B. Basilar skull fracture", "exp": "The correct answer is Basilar skull fracture.", "key": "Medical Emergency Knowledge"},
+  {"id": 92, "scen": "", "ask": "An asthma patient presents with wheezing and shortness of breath. The patient has already received 3 doses of salbutamol inhaler with no improvement. On paramedic arrival, 3 additional nebulized salbutamol doses were given, but there is still no change in the patient's condition. What is the MOST appropriate next management?", "opts": ["Magnesium sulfate", "Oxygen therapy only", "Continue nebulized salbutamol repeatedly", "Discharge with inhaler"], "ans": "A", "ansText": "A. Magnesium sulfate", "exp": "The correct answer is Magnesium sulfate.", "key": "Medical Emergency Knowledge"},
+  {"id": 93, "scen": "", "ask": "You arrive at a villa where a 68-year-old male slipped in the bathroom and struck his head on the floor. He is alert, complaining of neck pain, and denies numbness or tingling. What should the paramedic do according to the Canadian C-Spine Rule?", "opts": ["Allow him to walk to the stretcher", "Perform active neck rotation", "Apply C-spine precautions", "No immobilization needed"], "ans": "C", "ansText": "C. Apply C-spine precautions", "exp": "The correct answer is Apply C-spine precautions.", "key": "Medical Emergency Knowledge"},
+  {"id": 94, "scen": "", "ask": "A 34-year-old woman is brought to the ED after a minor side-impact crash. She is sitting comfortably, alert, and has no midline tenderness. She denies paresthesias. What does the CCR recommend?", "opts": ["Full spinal immobilization", "No C-spine immobilization required", "Immediate CT scan", "Apply collar and reassess in 30 minutes"], "ans": "B", "ansText": "B. No C-spine immobilization required", "exp": "The correct answer is No C-spine immobilization required.", "key": "Medical Emergency Knowledge"},
+  {"id": 95, "scen": "", "ask": "A 78-year-old man lives alone. He reports difficulty walking long distances, needs help with shopping, and has several chronic medical conditions. He answers \"YES\" to multiple PRISMA-7 questions related to mobility, chronic illness, and needing assistance. What is the MOST appropriate management?", "opts": ["Refer to community centre", "Send to ED for immediate review", "No intervention required", "Refer to ICU for monitoring"], "ans": "A", "ansText": "A. Refer to community centre", "exp": "The correct answer is Refer to community centre.", "key": "Medical Emergency Knowledge"},
+  {"id": 96, "scen": "", "ask": "A 68-year-old patient presents with slurred speech and right-sided weakness. Blood glucose is 3.7 mmol/L. The patient has a previous history of stroke. What is the most appropriate management regarding transport?", "opts": ["Correct blood sugar before transport", "Transport to nearest clinic for observation", "Transport immediately to a stroke center", "Discharge home if symptoms improve"], "ans": "C", "ansText": "C. Transport immediately to a stroke center", "exp": "The correct answer is Transport immediately to a stroke center.", "key": "Medical Emergency Knowledge"},
+  {"id": 97, "scen": "", "ask": "A staff member has just received news that their father has passed away and becomes visibly distressed at work. What is the MOST appropriate support to provide?", "opts": ["Supervise and allow them to express their feelings with appropriate support", "Reassign their duties immediately without further assessment", "Offer reassurance only", "Provide a brief 5-minute break"], "ans": "A", "ansText": "A. Supervise and allow them to express their feelings with appropriate support", "exp": "The correct answer is Supervise and allow them to express their feelings with appropriate support.", "key": "Medical Emergency Knowledge"},
+  {"id": 98, "scen": "", "ask": "A 45-year-old farmer is found confused, sweating profusely, with pinpoint pupils, excessive salivation, and wheezing after spraying pesticides. What is the MOST appropriate immediate medication?", "opts": ["Atropine", "Naloxone", "Flumazenil", "Activated charcoal"], "ans": "A", "ansText": "A. Atropine", "exp": "The correct answer is Atropine.", "key": "Medical Emergency Knowledge"},
+  {"id": 99, "scen": "", "ask": "A 22-year-old woman presents 3 hours after ingesting a large amount of paracetamol following an argument. She is alert and has no symptoms. What is the MOST appropriate management?", "opts": ["Give activated charcoal only", "Start acetylcysteine immediately", "Observe for 24 hours", "Discharge home with advice"], "ans": "B", "ansText": "B. Start acetylcysteine immediately", "exp": "The correct answer is Start acetylcysteine immediately.", "key": "Medical Emergency Knowledge"},
+  {"id": 100, "scen": "", "ask": "A patient presents with signs of hemotoxic envenomation after a viper bite: bleeding from the site, low platelets, and prolonged clotting time. What is the correct initial dose of ASV?", "opts": ["2 vials IV over 1 hour", "10 vials IV infusion over 1 hour", "1 vial IM", "20 vials IM"], "ans": "B", "ansText": "B. 10 vials IV infusion over 1 hour", "exp": "The correct answer is 10 vials IV infusion over 1 hour.", "key": "Medical Emergency Knowledge"}
+];
+
+var userMilitaryID = '';
+var eState = { answered:0, correct:0, wrong:0, done:{}, completed: false };
+
+function syncToCloud(type, data, score, pct, grade) {
+  var params = 'type=' + encodeURIComponent(type) +
+    '&id=' + encodeURIComponent(userMilitaryID) +
+    '&data=' + encodeURIComponent(data != null ? data : '') +
+    '&score=' + encodeURIComponent(score != null ? String(score) : '') +
+    '&pct=' + encodeURIComponent(pct != null ? String(pct) : '') +
+    '&grade=' + encodeURIComponent(grade != null ? grade : '');
+  cloudRequest(params, function(response, err) {
+    if (err) { console.warn('Sync ' + type + ' error:', err); }
+    else { console.log('Sync ' + type + ' OK'); }
+  }, 20000);
+}
+
+// ===== JSONP helper: inject <script> tag to load data from Google Apps Script =====
+var _jsonpCounter = 0;
+
+function cloudRequest(params, callback, timeout) {
+  timeout = timeout || 12000;
+  var baseUrl = APPS_SCRIPT_URL + '?' + params;
+  var url = baseUrl + '&_t=' + Date.now();
+  var done = false;
+
+  function finish(data, err) {
+    if (!done) { done = true; callback(data, err); }
+  }
+
+  // Safety timeout
+  var timer = setTimeout(function() { 
+    finish(null, 'timeout'); 
+  }, timeout);
+
+  // === METHOD 1: fetch (best for hosted sites) ===
+  if (window.fetch) {
+    fetch(url, { redirect: 'follow' })
+      .then(function(r) { 
+        if (!r.ok) throw new Error('HTTP ' + r.status); 
+        return r.json(); 
+      })
+      .then(function(data) { 
+        clearTimeout(timer); 
+        finish(data, null); 
+      })
+      .catch(function(fetchErr) {
+        console.warn('fetch failed:', fetchErr.message, '- trying JSONP');
+        tryJSONPFallback(baseUrl, timer, finish);
+      });
+  } else {
+    // No fetch available, go to JSONP
+    tryJSONPFallback(baseUrl, timer, finish);
+  }
+}
+
+function tryJSONPFallback(baseUrl, timer, finish) {
+  var cbName = '_cb_' + (++_jsonpCounter) + '_' + Date.now();
+  var script = document.createElement('script');
+  var jpDone = false;
+
+  window[cbName] = function(data) {
+    if (!jpDone) {
+      jpDone = true;
+      clearTimeout(timer);
+      if (script.parentNode) script.parentNode.removeChild(script);
+      try { delete window[cbName]; } catch(e) {}
+      finish(data, null);
+    }
+  };
+
+  script.src = baseUrl + '&callback=' + cbName + '&_t=' + Date.now();
+  script.onerror = function() {
+    if (!jpDone) {
+      jpDone = true;
+      if (script.parentNode) script.parentNode.removeChild(script);
+      try { delete window[cbName]; } catch(e) {}
+      // Last resort: XHR
+      tryXHRFallback(baseUrl + '&_t=' + Date.now(), timer, finish);
+    }
+  };
+  document.head.appendChild(script);
+}
+
+function tryXHRFallback(url, timer, finish) {
+  try {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.timeout = 8000;
+    xhr.onload = function() {
+      try {
+        clearTimeout(timer);
+        finish(JSON.parse(xhr.responseText), null);
+      } catch(e) {
+        clearTimeout(timer);
+        finish(null, 'parse error');
+      }
+    };
+    xhr.onerror = function() { clearTimeout(timer); finish(null, 'xhr error'); };
+    xhr.ontimeout = function() { clearTimeout(timer); finish(null, 'xhr timeout'); };
+    xhr.send();
+  } catch(e) {
+    clearTimeout(timer);
+    finish(null, 'xhr exception');
+  }
+}
+
+function submitReg() {
+  var idVal = document.getElementById('regMilitaryID').value.trim();
+  if (authorizedIDs.indexOf(idVal) === -1) { alert("Unauthorized ID. Please check your Military ID."); return; }
+  userMilitaryID = idVal;
+  var btn = document.getElementById('loginBtn');
+  btn.textContent = 'Loading...'; btn.disabled = true;
+  document.getElementById('syncMsg').style.display = 'block';
+  document.getElementById('syncMsg').textContent = 'Connecting to server...';
+
+  function enterExam(data) {
+    btn.textContent = '🚀 Enter Exam'; btn.disabled = false;
+    document.getElementById('syncMsg').style.display = 'none';
+    document.getElementById('regOverlay').style.display = 'none';
+    document.getElementById('userBadge').textContent = '🎖 ID: ' + userMilitaryID;
+    document.getElementById('userBadge').style.display = 'inline-block';
+
+    if (data && data.completed) {
+      eState.completed = true; eState.correct = data.score;
+      showResults(true);
+    } else {
+      if (data && data.progress) {
+        try {
+          eState.done = JSON.parse(data.progress);
+          eState.answered = 0; eState.correct = 0; eState.wrong = 0;
+          Object.values(eState.done).forEach(function(v) { eState.answered++; if(v.isOk) eState.correct++; else eState.wrong++; });
+        } catch(e) { console.error("Parse error", e); }
+      }
+      buildExam(); updateExamScore();
+    }
+  }
+
+  cloudRequest('type=fetchState&id=' + encodeURIComponent(idVal), function(data, err) {
+    if (err) { console.warn('fetchState failed:', err, '- entering exam anyway'); }
+    enterExam(data);
+  }, 10000);
+}
+
+function buildExam() {
+  var container = document.getElementById('examQs');
+  container.innerHTML = '';
+
+  // === SHUFFLE QUESTIONS (keeping linked groups together) ===
+  var linkedGroups = [[26,27,28],[30,31,32],[39,40]];
+  var linkedIds = {};
+  linkedGroups.forEach(function(grp) {
+    grp.forEach(function(id) { linkedIds[id] = grp[0]; });
+  });
+
+  var singles = [];
+  var groups = {};
+  QS.forEach(function(q) {
+    if (linkedIds[q.id]) {
+      var leader = linkedIds[q.id];
+      if (!groups[leader]) groups[leader] = [];
+      groups[leader].push(q);
+    } else {
+      singles.push(q);
+    }
+  });
+
+  var units = [];
+  singles.forEach(function(q) { units.push([q]); });
+  Object.keys(groups).forEach(function(leader) {
+    groups[leader].sort(function(a,b){ return a.id - b.id; });
+    units.push(groups[leader]);
+  });
+
+  // Shuffle units (Fisher-Yates)
+  for (var i = units.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var temp = units[i]; units[i] = units[j]; units[j] = temp;
+  }
+
+  var shuffledQS = [];
+  units.forEach(function(unit) {
+    unit.forEach(function(q) { shuffledQS.push(q); });
+  });
+
+  // === BUILD EACH QUESTION CARD ===
+  var displayNum = 0;
+  shuffledQS.forEach(function(q) {
+    displayNum++;
+    var card = document.createElement('div');
+    card.className = 'q-card';
+
+    var LTRS = ['A','B','C','D'];
+
+    // === SHUFFLE OPTIONS ===
+    var optObjs = q.opts.map(function(text, i) {
+      return { text: text, origLetter: LTRS[i] };
+    });
+    // Fisher-Yates shuffle
+    for (var i = optObjs.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = optObjs[i]; optObjs[i] = optObjs[j]; optObjs[j] = tmp;
+    }
+
+    // Find the NEW correct answer letter after shuffle
+    var newAns = '';
+    var newAnsText = '';
+    optObjs.forEach(function(opt, i) {
+      if (opt.origLetter === q.ans) {
+        newAns = LTRS[i];
+        newAnsText = LTRS[i] + '. ' + opt.text;
+      }
+    });
+
+    var optsHTML = optObjs.map(function(opt, i) {
+      return '<div class="opt" data-opt="' + LTRS[i] + '"><div class="opt-ltr">' + LTRS[i] + '</div><span>' + opt.text + '</span></div>';
+    }).join('');
+
+    card.innerHTML =
+      '<div class="q-head"><div class="q-num" id="qnum-' + q.id + '">' + displayNum + '</div><div class="q-scen">' + q.scen + '</div></div>' +
+      '<div class="q-ask">' + q.ask + '</div><div class="opts">' + optsHTML + '</div>' +
+      '<div class="result-banner" id="eres-' + q.id + '"></div>' +
+      '<div class="expbox" id="eexp-' + q.id + '"><div class="exp-top">\ud83d\udcd6 Explanation</div><div class="exp-body"><b>' + newAnsText + '</b><br>' + q.exp + '</div></div>';
+    container.appendChild(card);
+
+    // Store the shuffled correct answer
+    card._shuffledAns = newAns;
+
+    // If already answered (restored from progress), show it
+    if (eState.done[q.id]) {
+      applyUIShuffled(card, newAns, eState.done[q.id].chosen, eState.done[q.id].isOk);
+    }
+
+    card.querySelectorAll('.opt').forEach(function(opt) {
+      opt.onclick = function() {
+        if (eState.done[q.id] || eState.completed) return;
+        var chosen = this.dataset.opt;
+        var isOk = chosen === card._shuffledAns;
+        eState.done[q.id] = { chosen: chosen, isOk: isOk };
+        isOk ? eState.correct++ : eState.wrong++;
+        eState.answered++;
+        applyUIShuffled(card, card._shuffledAns, chosen, isOk);
+        updateExamScore();
+        syncToCloud('progress', JSON.stringify(eState.done));
+        if (eState.answered === QS.length) { eState.completed = true; setTimeout(showResults, 600); }
+      };
+    });
+  });
+}
+
+function applyUIShuffled(card, correctAns, chosen, isOk) {
+  card.querySelectorAll('.opt').forEach(function(o) {
+    o.classList.add('done');
+    if (o.dataset.opt === correctAns) o.classList.add('right');
+    if (o.dataset.opt === chosen && !isOk) o.classList.add('wrong');
+  });
+  card.classList.add(isOk ? 'answered-ok' : 'answered-bad');
+  card.querySelector('.q-num').classList.add(isOk ? 'ok' : 'bad');
+  card.querySelector('.expbox').classList.add('show');
+}
+
+function applyUI(card, q, chosen, isOk) {
+  card.querySelectorAll('.opt').forEach(function(o) {
+    o.classList.add('done');
+    if (o.dataset.opt === q.ans) o.classList.add('right');
+    if (o.dataset.opt === chosen && !isOk) o.classList.add('wrong');
+  });
+  card.classList.add(isOk ? 'answered-ok' : 'answered-bad');
+  card.querySelector('.q-num').classList.add(isOk ? 'ok' : 'bad');
+  card.querySelector('.expbox').classList.add('show');
+}
+
+function updateExamScore() {
+  document.getElementById('eAns').textContent = eState.answered;
+  document.getElementById('eCorr').textContent = eState.correct;
+  document.getElementById('ePct').textContent = Math.round((eState.correct/QS.length)*100) + '%';
+}
+
+function showResults(isResume) {
+  var pct = Math.round((eState.correct / QS.length) * 100);
+  document.getElementById('resultsPanel').classList.add('show');
+  document.getElementById('finalPct').textContent = pct + '%';
+  document.getElementById('rGrade').textContent = pct >= 80 ? 'PASS' : 'FAIL';
+  document.getElementById('rGrade').className = 'grade ' + (pct >= 80 ? 'gA' : 'gF');
+  if (!isResume) syncToCloud('score', null, eState.correct, pct, pct >= 80 ? 'PASS' : 'FAIL');
+}
+
+function toggleModal(id) { 
+  document.getElementById(id).classList.toggle('open'); 
+  if(id === 'sbModal') renderScoreboard();
+}
+
+function renderScoreboard() {
+  var list = document.getElementById('sbList');
+  list.innerHTML = '<div style="text-align:center;padding:20px;color:#7f8c8d;">Loading scores...</div>';
+
+  cloudRequest('type=getScores', function(data, err) {
+    if (err || !data) {
+      list.innerHTML = '<div style="text-align:center;padding:20px;">' +
+        '<div style="font-size:2rem;">⚠️</div>' +
+        '<b style="color:var(--accent);">Leaderboard Unavailable</b><br>' +
+        '<span style="color:#555;font-size:0.85rem;">(' + (err || 'No data') + ')</span><br><br>' +
+        '<button onclick="renderScoreboard()" style="padding:10px 20px;background:var(--primary);color:#fff;border:none;border-radius:8px;cursor:pointer;">🔄 Retry</button>' +
+        '</div>';
+      return;
+    }
+    displayScores(data, list);
+  });
+}
+
+function displayScores(data, list) {
+  var html = '';
+  var scores = data.scores || data.data || [];
+  if (!scores || scores.length === 0) { list.innerHTML = '<div style="text-align:center;padding:20px;color:#7f8c8d;">No scores yet.</div>'; return; }
+  var seen = {};
+  scores.forEach(function(s) {
+    var key = (s.mobile || s.id || s.name || 'unknown').toString().trim();
+    var name = s.name || s.id || s.mobile || 'Unknown';
+    var pct = Number(s.pct) || 0;
+    var grade = s.grade || (pct >= 80 ? 'PASS' : 'FAIL');
+    if (!seen[key]) seen[key] = { name: name, pct: pct, grade: grade };
+    else {
+      if (pct > seen[key].pct) { seen[key].pct = pct; seen[key].name = name; seen[key].grade = grade; }
+    }
+  });
+  var sorted = Object.values(seen).sort(function(a,b){ return b.pct - a.pct; });
+  var rank = 0;
+  sorted.forEach(function(s) {
+    rank++;
+    var medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '#' + rank;
+    var pctColor = s.pct >= 80 ? 'var(--green)' : 'var(--accent)';
+    var gradeTag = s.grade === 'PASS'
+      ? '<span style="background:#27ae60;color:#fff;padding:2px 8px;border-radius:6px;font-size:0.7rem;font-weight:bold;">PASS</span>'
+      : '<span style="background:#e74c3c;color:#fff;padding:2px 8px;border-radius:6px;font-size:0.7rem;font-weight:bold;">FAIL</span>';
+    html += '<div class="sb-row" style="align-items:center;padding:14px 12px;">' +
+      '<div style="display:flex;align-items:center;gap:10px;">' +
+        '<span style="font-size:1.3rem;min-width:28px;text-align:center;">' + medal + '</span>' +
+        '<div><b style="font-size:0.95rem;">' + s.name + '</b></div>' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;gap:10px;">' +
+        gradeTag +
+        '<span style="font-size:1.2rem;font-weight:bold;color:' + pctColor + ';min-width:45px;text-align:right;">' + s.pct + '%</span>' +
+      '</div>' +
+    '</div>';
+  });
+  list.innerHTML = html;
+}
+
+</script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a046642c2c2d5633',t:'MTc4MDIzNDgzNQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
